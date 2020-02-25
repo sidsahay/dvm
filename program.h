@@ -23,7 +23,7 @@ namespace dvm {
         AltInt = 0x20,
     };
 
-    enum struct RTypeFunctionCode {
+    enum struct RTypeCode {
         AddSub = 0x0,
         Sll    = 0x1,
         Slt    = 0x2,
@@ -34,7 +34,7 @@ namespace dvm {
         And    = 0x7,
     };
 
-    enum struct ITypeIntFunctionCode {
+    enum struct ITypeIntCode {
         Addi     = 0x0,
         Slti     = 0x2,
         Sltiu    = 0x3,
@@ -45,13 +45,21 @@ namespace dvm {
         SrliSrai = 0x5,
     };
 
-    enum struct STypeFunctionCode {
+    enum struct ITypeLoadCode {
+        Lb  = 0x0,
+        Lh  = 0x1,
+        Lw  = 0x2,
+        Lbu = 0x4,
+        Lhu = 0x5, 
+    };
+
+    enum struct STypeCode {
         Sb = 0x0,
         Sh = 0x1,
         Sw = 0x2,
     };
 
-    enum struct SbTypeFunctionCode {
+    enum struct SbTypeCode {
         Beq  = 0x0,
         Bne  = 0x1,
         Blt  = 0x4,
@@ -139,11 +147,18 @@ namespace dvm {
         }
 
         uint32_t readRegister(size_t register_number) {
-            return registers[register_number];
+            if (register_number == 0) {
+                return 0;
+            }
+            else {
+                return registers[register_number];
+            }
         }
 
         void writeRegister(size_t register_number, uint32_t value) {
-            registers[register_number] = value;
+            if (register_number != 0) {
+                registers[register_number] = value;
+            }
         }
 
         uint32_t readPc() {
@@ -153,6 +168,370 @@ namespace dvm {
         void writePc(uint32_t value) {
             pc = value;
         }
+
+        void add(size_t rd, size_t rs1, size_t rs2) {
+            uint32_t ans = readRegister(rs1) + readRegister(rs2);
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void sub(size_t rd, size_t rs1, size_t rs2) {
+            uint32_t ans = readRegister(rs1) - readRegister(rs2);
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void sll(size_t rd, size_t rs1, size_t rs2) {
+            uint32_t ans = readRegister(rs1) << readRegister(rs2);
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void slt(size_t rd, size_t rs1, size_t rs2) {
+            uint32_t ans = rs1_val < rs2_val;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void sltu(size_t rd, size_t rs1, size_t rs2) {
+            uint32_t ans = readRegister(rs1) < readRegister(rs2);
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void doXor(size_t rd, size_t rs1, size_t rs2) {
+            uint32_t ans = readRegister(rs1) ^ readRegister(rs2);
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void srl(size_t rd, size_t rs1, size_t rs2) {
+            uint32_t ans = readRegister(rs1) >> readRegister(rs2);
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void sra(size_t rd, size_t rs1, size_t rs2) {
+            int32_t rs1_val = readRegister(rs1);
+            int32_t rs2_val = readRegister(rs2);
+
+            uint32_t ans = rs1_val >> rs2_val;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void doOr(size_t rd, size_t rs1, size_t rs2) {
+            uint32_t ans = readRegister(rs1) | readRegister(rs2);
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void doAnd(size_t rd, size_t rs1, size_t rs2) {
+            uint32_t ans = readRegister(rs1) & readRegister(rs2);
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+
+        /*******I-type Immediate Arithmetic Instructions*******/
+
+        void addi(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t ans = readRegister(rs1) + itype_imm;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void slti(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t ans = (int32_t)readRegister(rs1) < itype_imm;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void sltiu(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t imm = itype_imm;
+            uint32_t ans = readRegister(rs1) < imm;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void xori(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t ans = readRegister(rs1) ^ itype_imm;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void ori(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t ans = readRegister(rs1) | itype_imm;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void andi(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t ans = readRegister(rs1) & itype_imm;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void slli(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t ans = readRegister(rs1) << itype_imm;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void srli(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t imm = itype_imm;
+            uint32_t ans = readRegister(rs1) >> imm;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+        void srai(size_t rd, size_t rs1, int32_t itype_imm) {
+            int32_t rs1_val = readRegister(rs1);
+            uint32_t ans = rs1_val >> itype_imm;
+            writeRegister(rd, ans);
+            pc = pc + 4;
+        }
+
+
+        /*******U-type Load Instructions*******/
+
+        void lui(size_t rd, uint32_t utype_imm) {
+            writeRegister(rd, utype_imm);
+            pc = pc + 4;
+        }
+
+        void auipc(size_t rd, uint32_t utype_imm) {
+            writeRegister(rd, pc + utype_imm);
+            pc = pc + 4;
+        }
+
+
+        /*******I-type Load Instructions*******/
+
+        void lw(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t read_word = readMemory(readRegister(rs1) + itype_imm);
+            writeRegister(rd, read_word);
+            pc = pc + 4;
+        }
+
+        void lh(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t addr = readRegister(rs1) + itype_imm;
+            uint32_t second_last_bit = (addr & 0x2) >> 1;
+            uint32_t addr_aligned = addr & ~0x2; //switch off second last bit, align to 4
+            uint32_t read_word = readMemory(addr_aligned);
+
+            int32_t output = 0;
+
+            if (second_last_bit == 0) 
+            {
+                output = (((int32_t)(read_word & 0xFFFF)) << 16) >> 16;
+            }
+            else 
+            {
+                output = ((int32_t)(read_word & 0xFFFF0000)) >> 16;
+            }
+
+            writeRegister(rd, output);
+            pc = pc + 4;
+        }
+
+        void lb(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t addr = readRegister(rs1) + itype_imm;
+            uint32_t first_two_bits = (addr & 0x3);
+            uint32_t addr_aligned = addr & ~0x3; //switch off last two bits
+            uint32_t read_word = readMemory(addr_aligned);
+
+            int32_t output = 0;
+
+            uint32_t offset = first_two_bits * 8U;
+            output = (((int32_t)(read_word & (0xFFU << offset))) << (24 - offset)) >> 24;
+
+            writeRegister(rd, output);
+            pc = pc + 4;
+        }
+
+        void lhu(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t addr = readRegister(rs1) + itype_imm;
+            uint32_t second_last_bit = (addr & 0x2) >> 1;
+            uint32_t addr_aligned = addr & ~0x2; //switch off second last bit, align to 4
+            uint32_t read_word = readMemory(addr_aligned);
+
+            uint32_t output = 0;
+
+            if (second_last_bit == 0) 
+            {
+                output = read_word & 0xFFFF;
+            }
+            else 
+            {
+                output = (read_word & 0xFFFF0000) >> 16U;
+            }
+
+            writeRegister(rd, output);
+            pc = pc + 4;
+        }
+
+        void lbu(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t addr = readRegister(rs1) + itype_imm;
+            uint32_t first_two_bits = (addr & 0x3);
+            uint32_t addr_aligned = addr & ~0x3; //switch off last two bits
+            uint32_t read_word = readMemory(addr_aligned);
+
+            uint32_t output = 0;
+
+            uint32_t offset = first_two_bits * 8U;
+            output = (read_word & (0xFFU << offset)) >> offset;
+
+            writeRegister(rd, output);
+            pc = pc + 4;
+        }
+
+
+        /*******S-type Store Instructions*******/
+
+        void sw(size_t rs1, size_t rs2, int32_t stype_offset) {
+            uint32_t addr = readRegister(rs1) + stype_offset;
+            uint32_t word = readRegister(rs2);
+            writeMemory(addr, word);
+            pc = pc + 4;
+        }
+
+        void sh(size_t rs1, size_t rs2, int32_t stype_offset) {
+            uint32_t addr = readRegister(rs1) + stype_offset;
+            uint32_t second_last_bit = (addr & 0x2) >> 1;
+            uint32_t addr_aligned = addr & ~0x2; //switch off second last bit, align to 4
+            uint32_t read_word = readMemory(addr_aligned);
+            uint32_t to_write = readRegister(rs2) & 0xFFFF;
+            uint32_t output = 0;
+
+            if (second_last_bit == 0) {
+                output = (read_word & ~0xFFFF) | to_write;
+            }
+            else {
+                output = (read_word & ~0xFFFF0000) | (to_write << 16);
+            }
+
+            writeMemory(addr_aligned, output);
+            pc = pc + 4;
+        }
+
+        void sb(size_t rs1, size_t rs2, int32_t stype_offset) {
+            uint32_t addr = readRegister(rs1) + stype_offset;
+            uint32_t first_two_bits = (addr & 0x3);
+            uint32_t addr_aligned = addr & ~0x3; //switch off last two bits
+            uint32_t read_word = readMemory(addr_aligned);
+            uint32_t to_write = readRegister(rs2) & 0xFF;
+
+            uint32_t output = 0;
+
+            uint32_t offset = first_two_bits * 8U;
+            output = (read_word & ~(0xFFU << offset)) | (to_write << offset);
+
+            writeMemory(addr_aligned, output);
+            pc = pc + 4;
+        }
+
+
+        /*******J-type Jump*******/
+
+        void jal(size_t rd, int32_t jtype_offset) {
+            if (rd != 0) {
+                writeRegister(rd, pc + 4);
+            }
+
+            pc = pc + jtype_offset;
+        }
+
+
+        /*******I-type Jump*******/
+
+        void jalr(size_t rd, size_t rs1, int32_t itype_imm) {
+            uint32_t addr = readRegister(rs1) + itype_imm;
+            addr = addr & ~1;
+
+            if (rd != 0) {
+                writeRegister(rd, pc + 4);
+            }
+
+            pc = addr;
+        }
+
+
+        /*******B-type Jump*******/
+
+        void beq(size_t rs1, size_t rs2, int32_t btype_offset) {
+            uint32_t rs1_val = readRegister(rs1);
+            uint32_t rs2_val = readRegister(rs2);
+
+            if (rs1_val == rs2_val) {
+                pc = pc + btype_offset;
+            }
+            else {
+                pc = pc + 4;
+            }
+        }
+
+        void bne(size_t rs1, size_t rs2, int32_t btype_offset) {
+            uint32_t rs1_val = readRegister(rs1);
+            uint32_t rs2_val = readRegister(rs2);
+
+            if (rs1_val != rs2_val) {
+                pc = pc + btype_offset;
+            }
+            else {
+                pc = pc + 4;
+            }
+        }
+
+        void blt(size_t rs1, size_t rs2, int32_t btype_offset) {
+            int32_t rs1_val = readRegister(rs1);
+            int32_t rs2_val = readRegister(rs2);
+
+            if (rs1_val < rs2_val) {
+                pc = pc + btype_offset;
+            }
+            else {
+                pc = pc + 4;
+            }
+        }
+
+        void bge(size_t rs1, size_t rs2, int32_t btype_offset) {
+            int32_t rs1_val = readRegister(rs1);
+            int32_t rs2_val = readRegister(rs2);
+
+            if (rs1_val >= rs2_val) {
+                pc = pc + btype_offset;
+            }
+            else {
+                pc = pc + 4;
+            }
+        }
+
+        void bltu(size_t rs1, size_t rs2, int32_t btype_offset) {
+            uint32_t rs1_val = readRegister(rs1);
+            uint32_t rs2_val = readRegister(rs2);
+
+            if (rs1_val < rs2_val) {
+                pc = pc + btype_offset;
+            }
+            else {
+                pc = pc + 4;
+            }
+        }
+
+        void bgeu(size_t rs1, size_t rs2, int32_t btype_offset) {
+            uint32_t rs1_val = readRegister(rs1);
+            uint32_t rs2_val = readRegister(rs2);
+
+            if (rs1_val >= rs2_val) {
+                pc = pc + btype_offset;
+            }
+            else {
+                pc = pc + 4;
+            }
+        }
+
+
     };
 
     std::ostream& operator<<(std::ostream& o, const Machine& m) {
